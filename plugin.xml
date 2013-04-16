@@ -22,8 +22,19 @@
   </platform>
 
   <platform name="ios">
-    <source-file src="src/ios/CDVZip.m" />
-    <header-file src="src/ios/CDVZip.h" />
+    <source-file src="src/ios/Zip.m" />
+    <header-file src="src/ios/Zip.h" />
+    <source-file src="src/ios/SSZipArchive.m" />
+    <header-file src="src/ios/SSZipArchive.h" />
+    <source-file src="src/ios/minizip/zip.c" />
+    <header-file src="src/ios/minizip/zip.h" />
+    <source-file src="src/ios/minizip/unzip.c" />
+    <header-file src="src/ios/minizip/unzip.h" />
+    <source-file src="src/ios/minizip/mztools.c" />
+    <header-file src="src/ios/minizip/mztools.h" />
+    <source-file src="src/ios/minizip/ioapi.c" />
+    <header-file src="src/ios/minizip/ioapi.h" />
+    <header-file src="src/ios/minizip/crypt.h" />
 
     <config-file target="config.xml" parent="/widget/plugins">
       <plugin name="Zip" value="Zip" />
