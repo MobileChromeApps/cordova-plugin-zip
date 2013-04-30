@@ -24,20 +24,21 @@
   <platform name="ios">
     <source-file src="src/ios/Zip.m" />
     <header-file src="src/ios/Zip.h" />
-    <source-file src="src/ios/SSZipArchive.m" />
-    <header-file src="src/ios/SSZipArchive.h" />
-    <source-file src="src/ios/minizip/zip.c" />
-    <header-file src="src/ios/minizip/zip.h" />
-    <source-file src="src/ios/minizip/unzip.c" />
-    <header-file src="src/ios/minizip/unzip.h" />
-    <source-file src="src/ios/minizip/mztools.c" />
-    <header-file src="src/ios/minizip/mztools.h" />
-    <source-file src="src/ios/minizip/ioapi.c" />
-    <header-file src="src/ios/minizip/ioapi.h" />
-    <header-file src="src/ios/minizip/crypt.h" />
+    <source-file src="src/ios/SSZipArchive.m" target-dir="Plugins/minizip" />
+    <header-file src="src/ios/SSZipArchive.h" target-dir="Plugins/minizip" />
+    <source-file src="src/ios/minizip/zip.c" target-dir="Plugins/minizip" />
+    <header-file src="src/ios/minizip/zip.h" target-dir="Plugins/minizip" />
+    <source-file src="src/ios/minizip/unzip.c" target-dir="Plugins/minizip" />
+    <header-file src="src/ios/minizip/unzip.h" target-dir="Plugins/minizip" />
+    <source-file src="src/ios/minizip/mztools.c" target-dir="Plugins/minizip" />
+    <header-file src="src/ios/minizip/mztools.h" target-dir="Plugins/minizip" />
+    <source-file src="src/ios/minizip/ioapi.c" target-dir="Plugins/minizip" />
+    <header-file src="src/ios/minizip/ioapi.h" target-dir="Plugins/minizip" />
+    <header-file src="src/ios/minizip/crypt.h" target-dir="Plugins/minizip" />
 
     <config-file target="config.xml" parent="/widget/plugins">
       <plugin name="Zip" value="Zip" />
     </config-file>
+    <framework src="libz.dylib" />
   </platform>
 </plugin>
