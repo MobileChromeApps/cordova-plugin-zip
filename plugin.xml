@@ -16,8 +16,10 @@
   <platform name="android">
     <source-file src="src/android/Zip.java" target-dir="src/org/apache/cordova" />
 
-    <config-file target="res/xml/config.xml" parent="/cordova/plugins">
-      <plugin name="Zip" value="org.apache.cordova.Zip" />
+    <config-file target="res/xml/config.xml" parent="/widget">
+      <feature name="Zip">
+        <param name="android-package" value="org.apache.cordova.Zip"/>
+      </feature>
     </config-file>
   </platform>
 
@@ -36,8 +38,10 @@
     <header-file src="src/ios/minizip/ioapi.h" target-dir="Plugins/minizip" />
     <header-file src="src/ios/minizip/crypt.h" target-dir="Plugins/minizip" />
 
-    <config-file target="config.xml" parent="/widget/plugins">
-      <plugin name="Zip" value="Zip" />
+    <config-file target="config.xml" parent="/widget">
+      <feature name="Zip">
+        <param name="ios-package" value="Zip"/>
+      </feature>
     </config-file>
     <framework src="libz.dylib" />
   </platform>
