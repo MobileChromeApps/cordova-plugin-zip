@@ -50,7 +50,30 @@ public class Zip extends CordovaPlugin {
                 Log.e(LOG_TAG, "Doesn't exist");
             }
             InputStream is = new FileInputStream(zipFileName);
+
+            if (zipFileName.endsWith("crx")) {
+                // CRX files contain a header. This header consists of:
+                //  * 4 bytes of magic number
+                //  * 4 bytes of CRX format version,
+                //  * 4 bytes of public key length
+                //  * 4 bytes of signature length
+                //  * the public key
+                //  * the signature
+                // and then the ordinary zip data follows. We skip over the header before creating the ZipInputStream.
+
+                is.skip(8); // 4 bytes for the magic number, 4 for the version.
+                int pubkeyLength = is.read();
+                is.skip(3);
+
+                int signatureLength = is.read();
+                is.skip(3);
+
+                is.skip(pubkeyLength + signatureLength);
+            }
+
+            // The inputstream is now pointing at the start of the actual zip file content.
             ZipInputStream zis = new ZipInputStream(new BufferedInputStream(is));
+
             ZipEntry ze;
 
             byte[] buffer = new byte[1024];
