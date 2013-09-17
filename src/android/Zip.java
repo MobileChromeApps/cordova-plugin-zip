@@ -49,6 +49,12 @@ public class Zip extends CordovaPlugin {
             if(!ex) {
                 Log.e(LOG_TAG, "Doesn't exist");
             }
+
+            File outputDir = new File(outputDirectory);
+            if(!outputDir.exists() && !outputDir.mkdirs()){
+                throw new FileNotFoundException("File: \"" + outputDirectory + "\" not found");
+            }
+
             InputStream is = new FileInputStream(zipFileName);
 
             if (zipFileName.endsWith("crx")) {
@@ -86,14 +92,17 @@ public class Zip extends CordovaPlugin {
                    File dir = new File(outputDirectory + compressedName);
                    dir.mkdirs();
                 } else {
-                    FileOutputStream fout = new FileOutputStream(outputDirectory + compressedName);
-                    int count;
-                    while ((count = zis.read(buffer)) != -1) 
-                    {
-                        fout.write(buffer, 0, count);             
+                    File file = new File(outputDirectory + compressedName);
+                    if(file.exists() || file.createNewFile()){
+                        FileOutputStream fout = new FileOutputStream(file);
+                        int count;
+                        while ((count = zis.read(buffer)) != -1)
+                        {
+                            fout.write(buffer, 0, count);
+                        }
+                        fout.close();
                     }
 
-                    fout.close();
                 }
                 zis.closeEntry();
             }
