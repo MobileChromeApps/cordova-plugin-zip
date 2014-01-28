@@ -87,9 +87,11 @@ public class Zip extends CordovaPlugin {
             ZipEntry ze;
 
             byte[] buffer = new byte[1024];
+            boolean anyEntries = false;
 
             while ((ze = zis.getNextEntry()) != null) 
             {
+                anyEntries = true;
                 String compressedName = ze.getName();
 
                 if (ze.isDirectory()) {
@@ -111,7 +113,10 @@ public class Zip extends CordovaPlugin {
                 zis.closeEntry();
             }
             zis.close();
-            callbackContext.success();
+            if (anyEntries)
+                callbackContext.success();
+            else
+                callbackContext.error("Bad zip file");
         } catch (Exception e) {
             String errorMessage = "An error occurred while unzipping.";
             callbackContext.error(errorMessage);
