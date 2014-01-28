@@ -71,10 +71,12 @@ public class Zip extends CordovaPlugin {
 
                 is.skip(8); // 4 bytes for the magic number, 4 for the version.
                 int pubkeyLength = is.read();
-                is.skip(3);
+                pubkeyLength += is.read() << 8;
+                is.skip(2);
 
                 int signatureLength = is.read();
-                is.skip(3);
+                signatureLength += is.read() << 8;
+                is.skip(2);
 
                 is.skip(pubkeyLength + signatureLength);
             }
