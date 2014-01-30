@@ -99,6 +99,7 @@ public class Zip extends CordovaPlugin {
                    dir.mkdirs();
                 } else {
                     File file = new File(outputDirectory + compressedName);
+                    file.getParentFile().mkdirs();
                     if(file.exists() || file.createNewFile()){
                         FileOutputStream fout = new FileOutputStream(file);
                         int count;
