@@ -53,15 +53,14 @@ public class Zip extends CordovaPlugin {
             CordovaResourceApi resourceApi = webView.getResourceApi();
 
             File tempFile = resourceApi.mapUriToFile(zipUri);
-            boolean ex = tempFile.exists();
-            if(!ex) {
-                Log.e(LOG_TAG, "Doesn't exist");
+            if(tempFile == null || !tempFile.exists()) {
+                Log.e(LOG_TAG, "Zip file does not exist");
             }
 
             File outputDir = resourceApi.mapUriToFile(outputUri);
             outputDirectory = outputDir.getAbsolutePath();
             outputDirectory += outputDirectory.endsWith(File.separator) ? "" : File.separator;
-            if(!outputDir.exists() && !outputDir.mkdirs()){
+            if(outputDir == null || (!outputDir.exists() && !outputDir.mkdirs())){
                 throw new FileNotFoundException("File: \"" + outputDirectory + "\" not found");
             }
 
