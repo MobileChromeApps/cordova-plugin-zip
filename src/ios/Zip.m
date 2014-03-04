@@ -22,6 +22,7 @@
 
 - (void)unzip:(CDVInvokedUrlCommand*)command
 {
+    self->_command = command;
     [self.commandDelegate runInBackground:^{
         CDVPluginResult* pluginResult = nil;
         
@@ -33,7 +34,7 @@
             NSString *zipPath = [self pathForURL:zipURL];
             NSString *destinationPath = [self pathForURL:destinationURL];
 
-            if([SSZipArchive unzipFileAtPath:zipPath toDestination:destinationPath overwrite:YES password:nil error:&error]) {
+            if([SSZipArchive unzipFileAtPath:zipPath toDestination:destinationPath overwrite:YES password:nil error:&error delegate:self]) {
                 pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
             } else {
                 NSLog(@"%@ - %@", @"Error occurred during unzipping", [error localizedDescription]);
@@ -48,4 +49,14 @@
     }];
 }
 
+- (void)zipArchiveProgressEvent:(NSInteger)loaded total:(NSInteger)total
+{
+    NSMutableDictionary* message = [NSMutableDictionary dictionaryWithCapacity:2];
+    [message setObject:[NSNumber numberWithLongLong:loaded] forKey:@"loaded"];
+    [message setObject:[NSNumber numberWithLongLong:total] forKey:@"total"];
+
+    CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsDictionary:message];
+    [pluginResult setKeepCallbackAsBool:YES];
+    [self.commandDelegate sendPluginResult:pluginResult callbackId:self->_command.callbackId];
+}
 @end

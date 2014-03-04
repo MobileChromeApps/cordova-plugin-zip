@@ -55,6 +55,10 @@
 		return NO;
 	}
 	
+    ZPOS64_T fileSize = unzFileSize(zip);
+    ZPOS64_T currentPosition = 0;
+
+
 	unz_global_info  globalInfo = {0ul, 0ul};
 	unzGetGlobalInfo(zip, &globalInfo);
 	
@@ -77,6 +81,9 @@
 	if ([delegate respondsToSelector:@selector(zipArchiveWillUnzipArchiveAtPath:zipInfo:)]) {
 		[delegate zipArchiveWillUnzipArchiveAtPath:path zipInfo:globalInfo];
 	}
+        if ([delegate respondsToSelector:@selector(zipArchiveProgressEvent:total:)]) {
+                [delegate zipArchiveProgressEvent:currentPosition total:fileSize];
+        }
 	
 	NSInteger currentFileNumber = 0;
 	do {
@@ -102,11 +109,16 @@
 			break;
 		}
 		
+                currentPosition += fileInfo.compressed_size;
+
 		// Message delegate
 		if ([delegate respondsToSelector:@selector(zipArchiveWillUnzipFileAtIndex:totalFiles:archivePath:fileInfo:)]) {
 			[delegate zipArchiveWillUnzipFileAtIndex:currentFileNumber totalFiles:(NSInteger)globalInfo.number_entry
 										 archivePath:path fileInfo:fileInfo];
 		}
+                if ([delegate respondsToSelector:@selector(zipArchiveProgressEvent:total:)]) {
+                        [delegate zipArchiveProgressEvent:currentPosition total:fileSize];
+                }
         
 		char *filename = (char *)malloc(fileInfo.size_filename + 1);
 		unzGetCurrentFileInfo(zip, &fileInfo, filename, fileInfo.size_filename + 1, NULL, 0, NULL, 0);
@@ -268,6 +280,11 @@
 	if (success && [delegate respondsToSelector:@selector(zipArchiveDidUnzipArchiveAtPath:zipInfo:unzippedPath:)]) {
 		[delegate zipArchiveDidUnzipArchiveAtPath:path zipInfo:globalInfo unzippedPath:destination];
 	}
+        // final progress event = 100%
+        if ([delegate respondsToSelector:@selector(zipArchiveProgressEvent:total:)]) {
+                [delegate zipArchiveProgressEvent:fileSize total:fileSize];
+        }
+
 	
 	return success;
 }
