@@ -180,10 +180,6 @@ extern unzFile ZEXPORT unzOpen64 OF((const void *path));
        does not describe the reality
 */
 
-extern ZPOS64_T ZEXPORT unzFileSize OF((unzFile file));
-/*
-   Determine the file size of the zip file.
- */
 
 extern unzFile ZEXPORT unzOpen2 OF((const char *path,
                                     zlib_filefunc_def* pzlib_filefunc_def));

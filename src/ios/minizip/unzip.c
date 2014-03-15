@@ -800,24 +800,6 @@ extern unzFile ZEXPORT unzOpen64 (const void *path)
     return unzOpenInternal(path, NULL, 1);
 }
 
-extern ZPOS64_T ZEXPORT unzFileSize (unzFile file)
-{
-    unz64_s* s;
-    if (file==NULL)
-        return UNZ_PARAMERROR;
-    s=(unz64_s*)file;
-
-    // http://stackoverflow.com/questions/238603/how-can-i-get-a-files-size-in-c
-    ZPOS64_T oldFilePosition = ZTELL64(s->z_filefunc,s->filestream);
-    if (ZSEEK64(s->z_filefunc,s->filestream,0,ZLIB_FILEFUNC_SEEK_END)!=0)
-        return -1;
-    ZPOS64_T fileSize = ZTELL64(s->z_filefunc,s->filestream);
-    if (ZSEEK64(s->z_filefunc,s->filestream,oldFilePosition,ZLIB_FILEFUNC_SEEK_SET)!=0)
-        return -1;
-
-    return fileSize;
-}
-
 /*
   Close a ZipFile opened with unzipOpen.
   If there is files inside the .Zip opened with unzipOpenCurrentFile (see later),
