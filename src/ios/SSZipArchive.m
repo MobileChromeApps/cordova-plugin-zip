@@ -55,7 +55,8 @@
 		return NO;
 	}
 	
-    ZPOS64_T fileSize = unzFileSize(zip);
+    NSDictionary * fileAttributes = [[NSFileManager defaultManager] attributesOfItemAtPath:path error:nil];
+    ZPOS64_T fileSize = fileAttributes.fileSize;
     ZPOS64_T currentPosition = 0;
 
 
