@@ -13,7 +13,10 @@ import java.util.zip.ZipInputStream;
 import android.net.Uri;
 import org.apache.cordova.CallbackContext;
 import org.apache.cordova.CordovaPlugin;
+import org.apache.cordova.CordovaResourceApi.OpenForReadResult;
+import org.apache.cordova.PluginResult;
 import org.json.JSONException;
+import org.json.JSONObject;
 
 import android.util.Log;
 
@@ -74,9 +77,14 @@ public class Zip extends CordovaPlugin {
                 throw new FileNotFoundException("File: \"" + outputDirectory + "\" not found");
             }
 
-            inputStream = new BufferedInputStream(resourceApi.openForRead(zipUri).inputStream);
+            OpenForReadResult zipFile = resourceApi.openForRead(zipUri);
+            ProgressEvent progress = new ProgressEvent();
+            progress.setTotal(zipFile.length);
+
+            inputStream = new BufferedInputStream(zipFile.inputStream);
             inputStream.mark(10);
             int magic = readInt(inputStream);
+
             if (magic != 875721283) { // CRX identifier
                 inputStream.reset();
             } else {
@@ -93,6 +101,7 @@ public class Zip extends CordovaPlugin {
                 int signatureLength = readInt(inputStream);
 
                 inputStream.skip(pubkeyLength + signatureLength);
+                progress.setLoaded(16 + pubkeyLength + signatureLength);
             }
 
             // The inputstream is now pointing at the start of the actual zip file content.
@@ -126,8 +135,15 @@ public class Zip extends CordovaPlugin {
                     }
 
                 }
+                progress.addLoaded(ze.getCompressedSize());
+                updateProgress(callbackContext, progress);
                 zis.closeEntry();
             }
+
+            // final progress = 100%
+            progress.setLoaded(progress.getTotal());
+            updateProgress(callbackContext, progress);
+
             if (anyEntries)
                 callbackContext.success();
             else
@@ -146,10 +162,41 @@ public class Zip extends CordovaPlugin {
         }
     }
 
+    private void updateProgress(CallbackContext callbackContext, ProgressEvent progress) throws JSONException {
+        PluginResult pluginResult = new PluginResult(PluginResult.Status.OK, progress.toJSONObject());
+        pluginResult.setKeepCallback(true);
+        callbackContext.sendPluginResult(pluginResult);
+    }
+
     private Uri getUriForArg(String arg) {
         CordovaResourceApi resourceApi = webView.getResourceApi();
         Uri tmpTarget = Uri.parse(arg);
         return resourceApi.remapUri(
                 tmpTarget.getScheme() != null ? tmpTarget : Uri.fromFile(new File(arg)));
+    }
+
+    private static class ProgressEvent {
+        private long loaded;
+        private long total;
+        public long getLoaded() {
+            return loaded;
+        }
+        public void setLoaded(long loaded) {
+            this.loaded = loaded;
+        }
+        public void addLoaded(long add) {
+            this.loaded += add;
+        }
+        public long getTotal() {
+            return total;
+        }
+        public void setTotal(long total) {
+            this.total = total;
+        }
+        public JSONObject toJSONObject() throws JSONException {
+            return new JSONObject(
+                    "{loaded:" + loaded +
+                    ",total:" + total + "}");
+        }
     }
 }
