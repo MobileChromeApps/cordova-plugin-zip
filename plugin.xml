@@ -14,6 +14,9 @@
     <clobbers target="zip" />
   </js-module>
 
+  <js-module src="tests/tests.js" name="tests">
+  </js-module>
+
   <platform name="android">
     <source-file src="src/android/Zip.java" target-dir="src/org/apache/cordova" />
 
