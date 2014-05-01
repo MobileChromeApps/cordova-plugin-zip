@@ -7,15 +7,17 @@
 {
     // Attempt to use the File plugin to resolve the destination argument to a
     // file path.
-    NSString *path;
+    NSString *path = nil;
     id filePlugin = [self.commandDelegate getCommandInstance:@"File"];
     if (filePlugin != nil) {
         CDVFilesystemURL* url = [CDVFilesystemURL fileSystemURLWithString:urlString];
         path = [filePlugin filesystemPathForURL:url];
     }
-    // If that didn't work for any reason, return the original argument.
+    // If that didn't work for any reason, assume file: URL.
     if (path == nil) {
-        path = urlString;
+        if ([urlString hasPrefix:@"file:"]) {
+            path = [[NSURL URLWithString:urlString] path];
+        }
     }
     return path;
 }
