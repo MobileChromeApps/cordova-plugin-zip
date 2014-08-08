@@ -27,7 +27,6 @@ exports.defineAutoTests = function() {
         xhr.open('GET', 'http://archive.apache.org/dist/cordova/cordova-2.9.1-src.zip', true);
         xhr.responseType = 'blob';
         xhr.onerror = onError;
-        xhr.onprogress = console.log.bind(console);
         xhr.onload = function(e) {
 
           window.requestFileSystem(PERSISTENT, 1024 * 1024, function(fs) {
@@ -39,12 +38,12 @@ exports.defineAutoTests = function() {
 
                 var blob = new Blob([xhr.response]);
                 writer.write(blob);
-                fileUrl = fileEntry.toNativeURL();
+                fileUrl = fileEntry.toURL();
               }, onError);
             }, onError);
 
             fs.root.getDirectory('zipOutput', {create: true}, function(fileEntry) {
-              dirUrl = fileEntry.toNativeURL();
+              dirUrl = fileEntry.toURL();
             }, onError);
           }, onError);
         };
