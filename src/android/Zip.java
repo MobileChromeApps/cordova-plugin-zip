@@ -59,22 +59,26 @@ public class Zip extends CordovaPlugin {
             // Since Cordova 3.3.0 and release of File plugins, files are accessed via cdvfile://
             // Accept a path or a URI for the source zip.
             Uri zipUri = getUriForArg(zipFileName);
-
-            // Same for target directory
             Uri outputUri = getUriForArg(outputDirectory);
 
             CordovaResourceApi resourceApi = webView.getResourceApi();
 
             File tempFile = resourceApi.mapUriToFile(zipUri);
-            if(tempFile == null || !tempFile.exists()) {
-                Log.e(LOG_TAG, "Zip file does not exist");
+            if (tempFile == null || !tempFile.exists()) {
+                String errorMessage = "Zip file does not exist";
+                callbackContext.error(errorMessage);
+                Log.e(LOG_TAG, errorMessage);
+                return;
             }
 
             File outputDir = resourceApi.mapUriToFile(outputUri);
             outputDirectory = outputDir.getAbsolutePath();
             outputDirectory += outputDirectory.endsWith(File.separator) ? "" : File.separator;
-            if(outputDir == null || (!outputDir.exists() && !outputDir.mkdirs())){
-                throw new FileNotFoundException("File: \"" + outputDirectory + "\" not found");
+            if (outputDir == null || (!outputDir.exists() && !outputDir.mkdirs())){
+                String errorMessage = "Could not create output directory";
+                callbackContext.error(errorMessage);
+                Log.e(LOG_TAG, errorMessage);
+                return;
             }
 
             OpenForReadResult zipFile = resourceApi.openForRead(zipUri);
