@@ -20,7 +20,7 @@ exports.unzip = function(fileName, outputDirectory, callback, progressCallback) 
     };
     var fail = function(result) {
         if (callback) {
-            callback(-1);
+            callback(-1, new Error(result));
         }
     };
     exec(win, fail, 'Zip', 'unzip', [fileName, outputDirectory]);
