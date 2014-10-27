@@ -1,7 +1,5 @@
-exports.init = function() {
-  eval(require('org.apache.cordova.test-framework.test').injectJasmineInterface(this, 'this'));
+exports.defineAutoTests = function() {
   jasmine.DEFAULT_TIMEOUT_INTERVAL = 75000;
-
   var zip = require('org.chromium.zip.Zip');
 
   describe('Zip', function () {
@@ -29,7 +27,6 @@ exports.init = function() {
         xhr.open('GET', 'http://archive.apache.org/dist/cordova/cordova-2.9.1-src.zip', true);
         xhr.responseType = 'blob';
         xhr.onerror = onError;
-        xhr.onprogress = console.log.bind(console);
         xhr.onload = function(e) {
 
           window.requestFileSystem(PERSISTENT, 1024 * 1024, function(fs) {
@@ -41,12 +38,12 @@ exports.init = function() {
 
                 var blob = new Blob([xhr.response]);
                 writer.write(blob);
-                fileUrl = fileEntry.toNativeURL();
+                fileUrl = fileEntry.toURL();
               }, onError);
             }, onError);
 
             fs.root.getDirectory('zipOutput', {create: true}, function(fileEntry) {
-              dirUrl = fileEntry.toNativeURL();
+              dirUrl = fileEntry.toURL();
             }, onError);
           }, onError);
         };
