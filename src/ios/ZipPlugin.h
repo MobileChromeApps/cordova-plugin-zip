@@ -2,7 +2,7 @@
 #import <Cordova/CDVPlugin.h>
 #import "SSZipArchive.h"
 
-@interface Zip : CDVPlugin <SSZipArchiveDelegate> {
+@interface ZipPlugin : CDVPlugin <SSZipArchiveDelegate> {
     @private
     CDVInvokedUrlCommand* _command;
 }

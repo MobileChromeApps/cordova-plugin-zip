@@ -26,8 +26,8 @@
   </platform>
 
   <platform name="ios">
-    <source-file src="src/ios/Zip.m" />
-    <header-file src="src/ios/Zip.h" />
+    <source-file src="src/ios/ZipPlugin.m" />
+    <header-file src="src/ios/ZipPlugin.h" />
     <source-file src="src/ios/SSZipArchive.m" target-dir="Plugins/minizip" />
     <header-file src="src/ios/SSZipArchive.h" target-dir="Plugins/minizip" />
     <source-file src="src/ios/minizip/zip.c" target-dir="Plugins/minizip" />
@@ -42,7 +42,7 @@
 
     <config-file target="config.xml" parent="/widget">
       <feature name="Zip">
-        <param name="ios-package" value="Zip"/>
+        <param name="ios-package" value="ZipPlugin"/>
       </feature>
     </config-file>
     <framework src="libz.dylib" />

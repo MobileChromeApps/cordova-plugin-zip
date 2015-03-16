@@ -1,7 +1,7 @@
-#import "Zip.h"
+#import "ZipPlugin.h"
 #import "CDVFile.h"
 
-@implementation Zip
+@implementation ZipPlugin
 
 - (NSString *)pathForURL:(NSString *)urlString
 {
