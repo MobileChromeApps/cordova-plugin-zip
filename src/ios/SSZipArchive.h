@@ -6,9 +6,6 @@
 //  Copyright (c) Sam Soffes 2010-2014. All rights reserved.
 //
 
-#ifndef _SSZIPARCHIVE_H
-#define _SSZIPARCHIVE_H
-
 #import <Foundation/Foundation.h>
 #include "unzip.h"
 
@@ -25,7 +22,6 @@
 
 // Zip
 + (BOOL)createZipFileAtPath:(NSString *)path withFilesAtPaths:(NSArray *)filenames;
-+ (BOOL)createZipFileAtPath:(NSString *)path withContentsOfDirectory:(NSString *)directoryPath;
 
 - (id)initWithPath:(NSString *)path;
 - (BOOL)open;
@@ -46,7 +42,4 @@
 - (void)zipArchiveWillUnzipFileAtIndex:(NSInteger)fileIndex totalFiles:(NSInteger)totalFiles archivePath:(NSString *)archivePath fileInfo:(unz_file_info)fileInfo;
 - (void)zipArchiveDidUnzipFileAtIndex:(NSInteger)fileIndex totalFiles:(NSInteger)totalFiles archivePath:(NSString *)archivePath fileInfo:(unz_file_info)fileInfo;
 
-- (void)zipArchiveProgressEvent:(NSInteger)loaded total:(NSInteger)total;
 @end
-
-#endif /* _SSZIPARCHIVE_H */
