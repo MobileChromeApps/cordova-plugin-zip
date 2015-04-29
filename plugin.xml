@@ -2,12 +2,12 @@
 <plugin xmlns="http://phonegap.com/ns/plugins/1.0"
     xmlns:android="http://schemas.android.com/apk/res/android"
     id="cordova-plugin-zip"
-    version="2.1.0-dev">
+    version="2.1.1">
   <engines>
     <engine name="cordova" version=">=3.3.0" />
   </engines>
 
-  <name>Zip</name>
+  <name>cordova-plugin-zip</name>
   <description>Unzips zip files</description>
   <dependency id="org.apache.cordova.file" version=">=1.0.1" />
 

@@ -1,13 +1,12 @@
-zip
-===================
+# cordova-plugin-zip
 
 A Cordova plugin to unzip files in Android and iOS.
 
-##Installation
+## Installation
 
     cordova plugin add https://github.com/MobileChromeApps/zip.git
 
-##Usage
+## Usage
 
     zip.unzip(<source zip>, <destination dir>, <callback>, [<progressCallback>]);
 
