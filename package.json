@@ -1,25 +1,31 @@
 {
-  "name": "cordova-plugin-chromium-zip",
-  "version": "3.0.0",
+  "name": "cordova-plugin-zip",
+  "version": "2.1.1",
   "description": "Unzips zip files",
-  "main": "zip.js",
-  "directories": {
-    "test": "tests"
-  },
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+  "cordova": {
+    "id": "cordova-plugin-unzip",
+    "platforms": [
+      "android",
+      "ios"
+    ]
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/MobileChromeApps/zip.git"
+    "url": "https://github.com/MobileChromeApps/cordova-plugin-zip.git"
   },
   "keywords": [
-    "cordova",
-    "plugin",
-    "zip"
+    "ecosystem:cordova",
+    "cordova-android",
+    "cordova-ios"
+  ],
+  "engines": [
+    {
+      "name": "cordova",
+      "version": ">=3.3.0"
+    }
   ],
   "author": "",
-  "license": "ISC",
+  "license": "BSD",
   "bugs": {
     "url": "https://github.com/MobileChromeApps/zip/issues"
   },
