@@ -1514,7 +1514,6 @@ extern int ZEXPORT unzOpenCurrentFile3 (unzFile file, int* method,
     pfile_in_zip_read_info->size_local_extrafield = size_local_extrafield;
     pfile_in_zip_read_info->pos_local_extrafield=0;
     pfile_in_zip_read_info->raw=raw;
-    pfile_in_zip_read_info->byte_before_the_zipfile = 0;
 
     if (pfile_in_zip_read_info->read_buffer==NULL)
     {
@@ -1630,7 +1629,7 @@ extern int ZEXPORT unzOpenCurrentFile3 (unzFile file, int* method,
     if (password != NULL)
     {
         int i;
-        s->pcrc_32_tab = (const unsigned long*)get_crc_table();
+        s->pcrc_32_tab = get_crc_table();
         init_keys(password,s->keys,s->pcrc_32_tab);
         if (ZSEEK64(s->z_filefunc, s->filestream,
                   s->pfile_in_zip_read->pos_in_zipfile +
@@ -1719,24 +1718,10 @@ extern int ZEXPORT unzReadCurrentFile  (unzFile file, voidp buf, unsigned len)
 
     pfile_in_zip_read_info->stream.avail_out = (uInt)len;
 
-    // NOTE:
-    // This bit of code seems to try to set the amount of space in the output buffer based on the
-    // value stored in the headers stored in the .zip file. However, if those values are incorrect
-    // it may result in a loss of data when uncompresssing that file. The compressed data is still
-    // legit and will deflate without knowing the uncompressed code so this tidbit is unnecessary and
-    // may cause issues for some .zip files.
-    //
-    // It's removed in here to fix those issues.
-    //
-    // See: https://github.com/samsoffes/ssziparchive/issues/16
-    //
-    
-    /*
     if ((len>pfile_in_zip_read_info->rest_read_uncompressed) &&
         (!(pfile_in_zip_read_info->raw)))
         pfile_in_zip_read_info->stream.avail_out =
             (uInt)pfile_in_zip_read_info->rest_read_uncompressed;
-     */
 
     if ((len>pfile_in_zip_read_info->rest_read_compressed+
            pfile_in_zip_read_info->stream.avail_in) &&
