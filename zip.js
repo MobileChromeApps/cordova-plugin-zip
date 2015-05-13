@@ -2,10 +2,8 @@ var exec = cordova.require('cordova/exec');
 
 function newProgressEvent(result) {
     var event = {
-        fileIndex: result.fileIndex,
-        totalFiles: result.totalFiles,
-        total: 1, // For backwards compability
-        loaded: result.totalFiles > 0 ? result.fileIndex / result.totalFiles : 0
+        total: result.total,
+        loaded: result.loaded
     };
     return event;
 }

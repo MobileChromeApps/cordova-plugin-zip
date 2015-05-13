@@ -54,8 +54,8 @@
 - (void)zipArchiveWillUnzipFileAtIndex:(NSInteger)fileIndex totalFiles:(NSInteger)totalFiles archivePath:(NSString *)archivePath fileInfo:(unz_file_info)fileInfo
 {
     NSMutableDictionary* message = [NSMutableDictionary dictionaryWithCapacity:2];
-    [message setObject:[NSNumber numberWithLongLong:fileIndex] forKey:@"fileIndex"];
-    [message setObject:[NSNumber numberWithLongLong:totalFiles] forKey:@"totalFiles"];
+    [message setObject:[NSNumber numberWithLongLong:fileIndex] forKey:@"loaded"];
+    [message setObject:[NSNumber numberWithLongLong:totalFiles] forKey:@"total"];
     
     CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsDictionary:message];
     [pluginResult setKeepCallbackAsBool:YES];
