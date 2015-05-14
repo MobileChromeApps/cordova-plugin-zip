@@ -1,6 +1,6 @@
 {
   "name": "cordova-plugin-zip",
-  "version": "2.1.1",
+  "version": "3.0.0",
   "description": "Unzips zip files",
   "cordova": {
     "id": "cordova-plugin-unzip",

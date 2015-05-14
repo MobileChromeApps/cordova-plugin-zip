@@ -29,6 +29,10 @@ file size of the zip file.
 
 ## Release Notes
 
+### 3.0.0 (May 1, 2014)
+* Updated SSZipArchive (ios lib) to 0.2.1
+* Update file plugin dependency to use npm version (cordova-plugin-file)
+
 ### 2.1.0 (May 1, 2014)
 * Added progress events
 * Fix iOS path handling when given file: URLs as src/target
