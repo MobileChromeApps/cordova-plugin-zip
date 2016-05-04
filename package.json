@@ -1,12 +1,13 @@
 {
   "name": "cordova-plugin-zip",
-  "version": "3.1.0",
+  "version": "3.1.1",
   "description": "Unzips zip files",
   "cordova": {
     "id": "cordova-plugin-unzip",
     "platforms": [
       "android",
-      "ios"
+      "ios",
+      "windows"
     ]
   },
   "repository": {
@@ -16,7 +17,8 @@
   "keywords": [
     "ecosystem:cordova",
     "cordova-android",
-    "cordova-ios"
+    "cordova-ios",
+    "cordova-windows"
   ],
   "engines": [
     {
