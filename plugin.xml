@@ -23,6 +23,8 @@
         <param name="android-package" value="org.apache.cordova.Zip"/>
       </feature>
     </config-file>
+
+    <framework src="src/android/compress.gradle" custom="true" type="gradleReference" />
   </platform>
 
   <platform name="ios">
