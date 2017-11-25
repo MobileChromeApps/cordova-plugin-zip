@@ -6,11 +6,13 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.FileNotFoundException;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipInputStream;
-
 
 import android.net.Uri;
+
+import org.apache.commons.compress.archivers.ArchiveInputStream;
+import org.apache.commons.compress.archivers.ArchiveStreamFactory;
+import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
+
 import org.apache.cordova.CallbackContext;
 import org.apache.cordova.CordovaPlugin;
 import org.apache.cordova.CordovaResourceApi.OpenForReadResult;
@@ -109,14 +111,14 @@ public class Zip extends CordovaPlugin {
             }
 
             // The inputstream is now pointing at the start of the actual zip file content.
-            ZipInputStream zis = new ZipInputStream(inputStream);
+            ArchiveInputStream zis = new ArchiveStreamFactory().createArchiveInputStream("zip", inputStream);
             inputStream = zis;
 
-            ZipEntry ze;
+            ZipArchiveEntry ze;
             byte[] buffer = new byte[32 * 1024];
             boolean anyEntries = false;
 
-            while ((ze = zis.getNextEntry()) != null)
+            while ((ze = (ZipArchiveEntry) zis.getNextEntry()) != null)
             {
                 anyEntries = true;
                 String compressedName = ze.getName();
@@ -141,7 +143,6 @@ public class Zip extends CordovaPlugin {
                 }
                 progress.addLoaded(ze.getCompressedSize());
                 updateProgress(callbackContext, progress);
-                zis.closeEntry();
             }
 
             // final progress = 100%
