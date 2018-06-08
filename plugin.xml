@@ -15,6 +15,17 @@
     <clobbers target="zip" />
   </js-module>
 
+  <platform name="browser">
+      <config-file target="config.xml" parent="/*">
+        <feature name="Zip">
+            <param name="browser-package" value="Zip" />
+        </feature>
+      </config-file>
+      <js-module name="ZipProxy" src="src/browser/ZipProxy.js">
+        <runs />
+      </js-module>
+  </platform>
+
   <platform name="android">
     <source-file src="src/android/Zip.java" target-dir="src/org/apache/cordova" />
 

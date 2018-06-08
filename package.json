@@ -6,7 +6,8 @@
     "id": "cordova-plugin-unzip",
     "platforms": [
       "android",
-      "ios"
+      "ios",
+      "browser"
     ]
   },
   "repository": {
@@ -14,9 +15,13 @@
     "url": "https://github.com/MobileChromeApps/cordova-plugin-zip.git"
   },
   "keywords": [
+    "cordova",
+    "zip",
+    "unzip",
     "ecosystem:cordova",
     "cordova-android",
-    "cordova-ios"
+    "cordova-ios",
+    "cordova-browser"
   ],
   "engines": [
     {
