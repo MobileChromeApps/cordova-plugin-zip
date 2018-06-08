@@ -89,13 +89,16 @@ function unzip(zipFilePath, outputDirectoryPath, successCallback, errorCallback)
                                 total: zipEntries.length
                             });
                         }
-                        console.info(`unzip OK from ${zipFilePath} to ${outputDirectoryPath}`);
-                        successCallback({
-                            total: zipEntries.length
+                        zipReader.close(() => {
+                            console.info(`unzip OK from ${zipFilePath} to ${outputDirectoryPath}`);
+                            successCallback({
+                                total: zipEntries.length
+                            });
                         });
                     }
                     catch (e) {
                         console.error(e, `error while unzipping ${zipFilePath} to ${outputDirectoryPath}`);
+                        zipReader.close();
                         errorCallback(e);
                     }
                 }));
