@@ -1,4 +1,6 @@
 
+zip.useWebWorkers = false;
+
 enum FileErrors {
     TypeMismatchError = 11,
     NotFoundError = 1
