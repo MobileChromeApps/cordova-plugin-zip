@@ -19,8 +19,15 @@ interface CordovaZipPluginUnzipProgressEvent {
 }
 
 interface CordovaZipPlugin {
-    unzip(sourceZip: string, destinationDir: string, onSuccess: (status: CordovaZipPluginUnzipResult) => void);
-    unzip(sourceZip: string, destinationDir: string, onSuccess: (status: CordovaZipPluginUnzipResult) => void, progressCallback: (event: CordovaZipPluginUnzipProgressEvent) => void);
+    unzip(
+        sourceZip: string,
+        destinationDir: string,
+        onSuccess: (status: CordovaZipPluginUnzipResult, errorMessage?: string) => void);
+    unzip(
+        sourceZip: string,
+        destinationDir: string,
+        onSuccess: (status: CordovaZipPluginUnzipResult, errorMessage?: string) => void,
+        progressCallback: (event: CordovaZipPluginUnzipProgressEvent) => void);
 }
 
 declare var zip: CordovaZipPlugin;
