@@ -1,6 +1,4 @@
 
-zip.useWebWorkers = false;
-
 enum FileErrors {
     TypeMismatchError = 11,
     NotFoundError = 1
@@ -189,6 +187,9 @@ declare var require;
 module.exports = {
     unzip: function (successCallback, errorCallback, args) {
         const [zipFilePath, outputDirectoryPath] = args;
+
+        zip.useWebWorkers = false;
+
         unzip(zipFilePath, outputDirectoryPath, successCallback, errorCallback);
     }
 };

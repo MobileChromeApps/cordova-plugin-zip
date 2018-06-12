@@ -6,7 +6,6 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-zip.useWebWorkers = false;
 var FileErrors;
 (function (FileErrors) {
     FileErrors[FileErrors["TypeMismatchError"] = 11] = "TypeMismatchError";
@@ -164,6 +163,7 @@ function unzip(zipFilePath, outputDirectoryPath, successCallback, errorCallback)
 module.exports = {
     unzip: function (successCallback, errorCallback, args) {
         const [zipFilePath, outputDirectoryPath] = args;
+        zip.useWebWorkers = false;
         unzip(zipFilePath, outputDirectoryPath, successCallback, errorCallback);
     }
 };
