@@ -8,7 +8,24 @@ function newProgressEvent(result) {
     return event;
 }
 
-exports.unzip = function (fileName, outputDirectory, callback, progressCallback) {
+/**
+ *  Example:
+ *  const downZipUrl: string = downZipFileEntry.toInternalURL();
+    const downUnzipDirectoryUrl: string = downUnzipDir.toInternalURL();
+    zip.unzip(
+                downZipUrl,
+                downUnzipDirectoryUrl,
+                (result: CordovaZipPluginUnzipResult, errorMessage: string) => {
+                    if (result == CordovaZipPluginUnzipResult.Success) {
+                        resolve();
+                    } else {
+                        this.log.error(errorMessage, 'an error occurred during unzip');
+                        reject('an error occurred during unzip: ' + errorMessage);
+                    }
+                },
+                event => onProgress(event.loaded, event.total));
+ */
+exports.unzip = function (fileNameUrl, outputDirectoryUrl, callback, progressCallback) {
     var win = function (result) {
         if (result && typeof result.loaded != "undefined") {
             if (progressCallback) {
@@ -23,5 +40,5 @@ exports.unzip = function (fileName, outputDirectory, callback, progressCallback)
             callback(-1, result);
         }
     };
-    exec(win, fail, 'Zip', 'unzip', [fileName, outputDirectory]);
+    exec(win, fail, 'Zip', 'unzip', [fileNameUrl, outputDirectoryUrl]);
 };

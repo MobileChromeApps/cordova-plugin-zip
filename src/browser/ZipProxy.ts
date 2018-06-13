@@ -101,8 +101,8 @@ interface SuccessCallback {
 }
 
 async function unzip(
-    zipFilePath: string,
-    outputDirectoryPath: string,
+    zipFileUrl: string,
+    outputDirectoryUrl: string,
     successCallback: SuccessCallback,
     errorCallback) {
 
@@ -112,36 +112,42 @@ async function unzip(
             throw new Error('zip.js not available, please import it: https://gildas-lormeau.github.io/zip.js');
         }
 
-        console.info(`unzipping ${zipFilePath} to ${outputDirectoryPath}`);
+        console.info(`unzipping ${zipFileUrl} to ${outputDirectoryUrl}`);
 
         const fileSystem: FileSystem = await getFileSystem();
 
-        console.debug(`retrieving output directory: ${outputDirectoryPath}`);
+        console.debug(`retrieving output directory: ${outputDirectoryUrl}`);
         const outputDirectoryEntry: DirectoryEntry = await new Promise<DirectoryEntry>((resolve, reject) => {
-            fileSystem.root.getDirectory(outputDirectoryPath, { create: true, exclusive: false }, resolve, reject);
+            fileSystem.root.getDirectory(outputDirectoryUrl, { create: true, exclusive: false }, resolve, reject);
         });
 
         console.debug(`output directory entry: ${outputDirectoryEntry}`);
 
-        let zipEntry: FileEntry;
-        if (await exists(zipFilePath, fileSystem.root)) {
-            zipEntry = await getFileEntry(zipFilePath, fileSystem.root);
+        console.debug(`retrieving zip file: ${zipEntry}`);
+        new Promise<DirectoryEntry>((resolve, reject) => {
+            fileSystem.root.getDirectory(outputDirectoryUrl, { create: true, exclusive: false }, resolve, reject);
+        });
+        console.debug(`zip file entry: ${zipEntry}`);
+        window.resolveLocalFileSystemURL()
+        let zipEntry: FileEntry = await ;
+        if (await exists(zipFileUrl, fileSystem.root)) {
+            zipEntry = await getFileEntry(zipFileUrl, fileSystem.root);
         } else {
             const tempFileSystem: FileSystem = await getFileSystem(FileSystemType.TEMPORARY);
-            zipEntry = await getFileEntry(zipFilePath, tempFileSystem.root);
+            zipEntry = await getFileEntry(zipFileUrl, tempFileSystem.root);
         }
 
         const zipBlob: Blob = await new Promise<Blob>((resolve, reject) => {
             zipEntry.file(resolve, reject);
         });
 
-        console.info(`open reader on zip: ${zipFilePath}`);
+        console.info(`open reader on zip: ${zipFileUrl}`);
         zip.createReader(new zip.BlobReader(zipBlob), (zipReader) => {
 
-            console.debug(`reader opened on zip: ${zipFilePath}`);
+            console.debug(`reader opened on zip: ${zipFileUrl}`);
             zipReader.getEntries(async (zipEntries) => {
 
-                console.debug(`entries read: ${zipFilePath}`);
+                console.debug(`entries read: ${zipFileUrl}`);
 
                 successCallback({
                     loaded: 0,
@@ -161,14 +167,14 @@ async function unzip(
                     }
 
                     zipReader.close(() => {
-                        console.info(`unzip OK from ${zipFilePath} to ${outputDirectoryPath}`);
+                        console.info(`unzip OK from ${zipFileUrl} to ${outputDirectoryUrl}`);
                         successCallback({
                             total: zipEntries.length
                         });
                     });
 
                 } catch (e) {
-                    console.error(e, `error while unzipping ${zipFilePath} to ${outputDirectoryPath}`);
+                    console.error(e, `error while unzipping ${zipFileUrl} to ${outputDirectoryUrl}`);
                     zipReader.close();
                     errorCallback(e);
                 }
@@ -176,7 +182,7 @@ async function unzip(
         }, errorCallback);
 
     } catch (e) {
-        console.error(e, `error while unzipping ${zipFilePath} to ${outputDirectoryPath}`);
+        console.error(e, `error while unzipping ${zipFileUrl} to ${outputDirectoryUrl}`);
         errorCallback(e);
     }
 }
@@ -186,11 +192,11 @@ declare var require;
 
 module.exports = {
     unzip: function (successCallback, errorCallback, args) {
-        const [zipFilePath, outputDirectoryPath] = args;
+        const [zipFileUrl, outputDirectoryUrl] = args;
 
         zip.useWebWorkers = false;
 
-        unzip(zipFilePath, outputDirectoryPath, successCallback, errorCallback);
+        unzip(zipFileUrl, outputDirectoryUrl, successCallback, errorCallback);
     }
 };
 require("cordova/exec/proxy").add("Zip", module.exports);
