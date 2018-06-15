@@ -141,6 +141,9 @@ function unzipEntry(entry, outputDirectoryEntry) {
 }
 function unzip(zipFileUrl, outputDirectoryUrl, successCallback, errorCallback) {
     return __awaiter(this, void 0, void 0, function* () {
+        function onProgress(loaded, total) {
+            successCallback({ loaded, total }, { keepCallback: true });
+        }
         try {
             if (!zip) {
                 throw new Error('zip.js not available, please import it: https://gildas-lormeau.github.io/zip.js');
@@ -161,18 +164,12 @@ function unzip(zipFileUrl, outputDirectoryUrl, successCallback, errorCallback) {
                 console.debug(`reader opened on zip: ${zipFileUrl}`);
                 zipReader.getEntries((zipEntries) => __awaiter(this, void 0, void 0, function* () {
                     console.debug(`entries read: ${zipFileUrl}`);
-                    successCallback({
-                        loaded: 0,
-                        total: zipEntries.length
-                    });
+                    onProgress(0, zipEntries.length);
                     try {
                         let i = 0;
                         for (const entry of zipEntries) {
                             yield unzipEntry(entry, outputDirectoryEntry);
-                            successCallback({
-                                loaded: ++i,
-                                total: zipEntries.length
-                            });
+                            onProgress(++i, zipEntries.length);
                         }
                         zipReader.close(() => {
                             console.info(`unzip OK from ${zipFileUrl} to ${outputDirectoryUrl}`);

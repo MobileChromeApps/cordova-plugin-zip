@@ -142,7 +142,7 @@ async function unzipEntry(entry: zip.Entry, outputDirectoryEntry: DirectoryEntry
 }
 
 interface SuccessCallback {
-    (event: { loaded?: number, total: number }): void;
+    (event: { loaded?: number, total: number }, options?): void;
 }
 
 async function unzip(
@@ -150,6 +150,12 @@ async function unzip(
     outputDirectoryUrl: string,
     successCallback: SuccessCallback,
     errorCallback) {
+
+    function onProgress(loaded: number, total: number) {
+        successCallback(
+            { loaded, total },
+            { keepCallback: true });
+    }
 
     try {
 
@@ -181,10 +187,7 @@ async function unzip(
 
                 console.debug(`entries read: ${zipFileUrl}`);
 
-                successCallback({
-                    loaded: 0,
-                    total: zipEntries.length
-                });
+                onProgress(0, zipEntries.length);
 
                 try {
 
@@ -192,10 +195,7 @@ async function unzip(
                     for (const entry of zipEntries) {
                         await unzipEntry(entry, outputDirectoryEntry);
 
-                        successCallback({
-                            loaded: ++i,
-                            total: zipEntries.length
-                        });
+                        onProgress(++i, zipEntries.length);
                     }
 
                     zipReader.close(() => {
