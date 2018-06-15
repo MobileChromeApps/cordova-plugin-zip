@@ -25,6 +25,43 @@ function getFileEntry(path, parentDirectory) {
         parentDirectory.getFile(path, {}, resolve, reject);
     });
 }
+function resolveOrCreateDirectoryEntry(entryUrl) {
+    return resolveOrCreateEntry(entryUrl, true);
+}
+function resolveOrCreateFileEntry(entryUrl) {
+    return resolveOrCreateEntry(entryUrl, false);
+}
+function resolveOrCreateEntry(entryUrl, directory) {
+    return __awaiter(this, void 0, void 0, function* () {
+        let entry;
+        try {
+            entry = (yield new Promise((resolve, reject) => {
+                window.resolveLocalFileSystemURL(entryUrl, resolve, reject);
+            }));
+        }
+        catch (e) {
+            console.error(e);
+            console.error(`cannot resolve directory entry at url ${entryUrl}`);
+            const fileSystem = yield (entryUrl.indexOf('/temporary/') != -1 ? getFileSystem(FileSystemType.TEMPORARY) : getFileSystem());
+            let path = entryUrl;
+            if (entryUrl.indexOf('/temporary/') != -1) {
+                path = entryUrl.substring(entryUrl.indexOf('/temporary/') + '/temporary/'.length - 1);
+            }
+            else if (entryUrl.indexOf('/persistent/') != -1) {
+                path = entryUrl.substring(entryUrl.indexOf('/persistent/') + '/persistent/'.length - 1);
+            }
+            entry = yield new Promise((resolve, reject) => {
+                if (directory) {
+                    fileSystem.root.getDirectory(path, { create: true, exclusive: false }, resolve, reject);
+                }
+                else {
+                    fileSystem.root.getFile(path, { create: true, exclusive: true }, resolve, reject);
+                }
+            });
+        }
+        return entry;
+    });
+}
 function exists(path, parentDirectory) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
@@ -47,8 +84,12 @@ var FileSystemType;
     FileSystemType[FileSystemType["TEMPORARY"] = window.TEMPORARY] = "TEMPORARY";
     FileSystemType[FileSystemType["PERSISTENT"] = window.PERSISTENT] = "PERSISTENT";
 })(FileSystemType || (FileSystemType = {}));
+const fileSystemsCache = {};
 function getFileSystem(type = FileSystemType.PERSISTENT) {
     return __awaiter(this, void 0, void 0, function* () {
+        if (fileSystemsCache[type]) {
+            return fileSystemsCache[type];
+        }
         const requestFileSystem = window['webkitRequestFileSystem'] || window.requestFileSystem;
         const storageInfo = navigator['webkitPersistentStorage'] || window['storageInfo'];
         console.debug(`zip plugin - requestFileSystem=${requestFileSystem} - storageInfo=${storageInfo}`);
@@ -69,6 +110,7 @@ function getFileSystem(type = FileSystemType.PERSISTENT) {
             requestFileSystem(type, grantedBytes, resolve, reject);
         });
         console.debug('FileSystem ready: ' + fileSystem.name);
+        fileSystemsCache[type] = fileSystem;
         return fileSystem;
     });
 }
@@ -97,35 +139,28 @@ function unzipEntry(entry, outputDirectoryEntry) {
         }
     });
 }
-function unzip(zipFilePath, outputDirectoryPath, successCallback, errorCallback) {
+function unzip(zipFileUrl, outputDirectoryUrl, successCallback, errorCallback) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
             if (!zip) {
                 throw new Error('zip.js not available, please import it: https://gildas-lormeau.github.io/zip.js');
             }
-            console.info(`unzipping ${zipFilePath} to ${outputDirectoryPath}`);
+            console.info(`unzipping ${zipFileUrl} to ${outputDirectoryUrl}`);
             const fileSystem = yield getFileSystem();
-            console.debug(`retrieving output directory: ${outputDirectoryPath}`);
-            const outputDirectoryEntry = yield new Promise((resolve, reject) => {
-                fileSystem.root.getDirectory(outputDirectoryPath, { create: true, exclusive: false }, resolve, reject);
-            });
+            console.debug(`retrieving output directory: ${outputDirectoryUrl}`);
+            const outputDirectoryEntry = yield resolveOrCreateDirectoryEntry(outputDirectoryUrl);
             console.debug(`output directory entry: ${outputDirectoryEntry}`);
-            let zipEntry;
-            if (yield exists(zipFilePath, fileSystem.root)) {
-                zipEntry = yield getFileEntry(zipFilePath, fileSystem.root);
-            }
-            else {
-                const tempFileSystem = yield getFileSystem(FileSystemType.TEMPORARY);
-                zipEntry = yield getFileEntry(zipFilePath, tempFileSystem.root);
-            }
+            console.debug(`retrieving zip file: ${zipFileUrl}`);
+            let zipEntry = yield resolveOrCreateFileEntry(zipFileUrl);
+            console.debug(`zip file entry: ${zipEntry}`);
             const zipBlob = yield new Promise((resolve, reject) => {
                 zipEntry.file(resolve, reject);
             });
-            console.info(`open reader on zip: ${zipFilePath}`);
+            console.info(`open reader on zip: ${zipFileUrl}`);
             zip.createReader(new zip.BlobReader(zipBlob), (zipReader) => {
-                console.debug(`reader opened on zip: ${zipFilePath}`);
+                console.debug(`reader opened on zip: ${zipFileUrl}`);
                 zipReader.getEntries((zipEntries) => __awaiter(this, void 0, void 0, function* () {
-                    console.debug(`entries read: ${zipFilePath}`);
+                    console.debug(`entries read: ${zipFileUrl}`);
                     successCallback({
                         loaded: 0,
                         total: zipEntries.length
@@ -140,14 +175,14 @@ function unzip(zipFilePath, outputDirectoryPath, successCallback, errorCallback)
                             });
                         }
                         zipReader.close(() => {
-                            console.info(`unzip OK from ${zipFilePath} to ${outputDirectoryPath}`);
+                            console.info(`unzip OK from ${zipFileUrl} to ${outputDirectoryUrl}`);
                             successCallback({
                                 total: zipEntries.length
                             });
                         });
                     }
                     catch (e) {
-                        console.error(e, `error while unzipping ${zipFilePath} to ${outputDirectoryPath}`);
+                        console.error(e, `error while unzipping ${zipFileUrl} to ${outputDirectoryUrl}`);
                         zipReader.close();
                         errorCallback(e);
                     }
@@ -155,16 +190,16 @@ function unzip(zipFilePath, outputDirectoryPath, successCallback, errorCallback)
             }, errorCallback);
         }
         catch (e) {
-            console.error(e, `error while unzipping ${zipFilePath} to ${outputDirectoryPath}`);
+            console.error(e, `error while unzipping ${zipFileUrl} to ${outputDirectoryUrl}`);
             errorCallback(e);
         }
     });
 }
 module.exports = {
     unzip: function (successCallback, errorCallback, args) {
-        const [zipFilePath, outputDirectoryPath] = args;
+        const [zipFileUrl, outputDirectoryUrl] = args;
         zip.useWebWorkers = false;
-        unzip(zipFilePath, outputDirectoryPath, successCallback, errorCallback);
+        unzip(zipFileUrl, outputDirectoryUrl, successCallback, errorCallback);
     }
 };
 require("cordova/exec/proxy").add("Zip", module.exports);

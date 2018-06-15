@@ -22,6 +22,44 @@ function getFileEntry(path: string, parentDirectory: DirectoryEntry): Promise<Fi
     });
 }
 
+function resolveOrCreateDirectoryEntry(entryUrl: string): Promise<DirectoryEntry> {
+    return resolveOrCreateEntry(entryUrl, true) as Promise<DirectoryEntry>;
+}
+
+function resolveOrCreateFileEntry(entryUrl: string): Promise<FileEntry> {
+    return resolveOrCreateEntry(entryUrl, false) as Promise<FileEntry>;
+}
+
+async function resolveOrCreateEntry(entryUrl: string, directory: boolean): Promise<DirectoryEntry | FileEntry> {
+    let entry: DirectoryEntry | FileEntry;
+    try {
+        entry = await new Promise<Entry>((resolve, reject) => {
+            window.resolveLocalFileSystemURL(entryUrl, resolve, reject);
+        }) as DirectoryEntry | FileEntry;
+    } catch (e) {
+        console.error(e);
+        console.error(`cannot resolve directory entry at url ${entryUrl}`);
+
+        const fileSystem: FileSystem = await (entryUrl.indexOf('/temporary/') != -1 ? getFileSystem(FileSystemType.TEMPORARY) : getFileSystem());
+        let path: string = entryUrl;
+        if (entryUrl.indexOf('/temporary/') != -1) {
+            path = entryUrl.substring(entryUrl.indexOf('/temporary/') + '/temporary/'.length - 1);
+        } else if (entryUrl.indexOf('/persistent/') != -1) {
+            path = entryUrl.substring(entryUrl.indexOf('/persistent/') + '/persistent/'.length - 1);
+        }
+
+        entry = await new Promise<DirectoryEntry | FileEntry>((resolve, reject) => {
+            if (directory) {
+                fileSystem.root.getDirectory(path, { create: true, exclusive: false }, resolve, reject);
+            } else {
+                fileSystem.root.getFile(path, { create: true, exclusive: true }, resolve, reject);
+            }
+        });
+    }
+
+    return entry;
+}
+
 async function exists(path: string, parentDirectory: DirectoryEntry): Promise<boolean> {
     try {
         await getFileEntry(path, parentDirectory);
@@ -44,7 +82,12 @@ enum FileSystemType {
     PERSISTENT = window.PERSISTENT
 }
 
+const fileSystemsCache: { [type: number]: FileSystem } = {};
 async function getFileSystem(type: FileSystemType = FileSystemType.PERSISTENT): Promise<FileSystem> {
+    if (fileSystemsCache[type]) {
+        return fileSystemsCache[type];
+    }
+
     const requestFileSystem = window['webkitRequestFileSystem'] || window.requestFileSystem;
     const storageInfo = navigator['webkitPersistentStorage'] || window['storageInfo'];
 
@@ -68,6 +111,8 @@ async function getFileSystem(type: FileSystemType = FileSystemType.PERSISTENT): 
         requestFileSystem(type, grantedBytes, resolve, reject);
     });
     console.debug('FileSystem ready: ' + fileSystem.name);
+
+    fileSystemsCache[type] = fileSystem;
 
     return fileSystem;
 }
@@ -117,25 +162,12 @@ async function unzip(
         const fileSystem: FileSystem = await getFileSystem();
 
         console.debug(`retrieving output directory: ${outputDirectoryUrl}`);
-        const outputDirectoryEntry: DirectoryEntry = await new Promise<DirectoryEntry>((resolve, reject) => {
-            fileSystem.root.getDirectory(outputDirectoryUrl, { create: true, exclusive: false }, resolve, reject);
-        });
-
+        const outputDirectoryEntry: DirectoryEntry = await resolveOrCreateDirectoryEntry(outputDirectoryUrl);
         console.debug(`output directory entry: ${outputDirectoryEntry}`);
 
-        console.debug(`retrieving zip file: ${zipEntry}`);
-        new Promise<DirectoryEntry>((resolve, reject) => {
-            fileSystem.root.getDirectory(outputDirectoryUrl, { create: true, exclusive: false }, resolve, reject);
-        });
+        console.debug(`retrieving zip file: ${zipFileUrl}`);
+        let zipEntry: FileEntry = await resolveOrCreateFileEntry(zipFileUrl);
         console.debug(`zip file entry: ${zipEntry}`);
-        window.resolveLocalFileSystemURL()
-        let zipEntry: FileEntry = await ;
-        if (await exists(zipFileUrl, fileSystem.root)) {
-            zipEntry = await getFileEntry(zipFileUrl, fileSystem.root);
-        } else {
-            const tempFileSystem: FileSystem = await getFileSystem(FileSystemType.TEMPORARY);
-            zipEntry = await getFileEntry(zipFileUrl, tempFileSystem.root);
-        }
 
         const zipBlob: Blob = await new Promise<Blob>((resolve, reject) => {
             zipEntry.file(resolve, reject);
