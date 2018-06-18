@@ -62,6 +62,33 @@ function resolveOrCreateEntry(entryUrl, directory) {
         return entry;
     });
 }
+function getOrCreateDirectoryForPath(parent, pathEntries) {
+    return __awaiter(this, void 0, void 0, function* () {
+        pathEntries = pathEntries.filter(pathEntry => pathEntry != '');
+        return new Promise((resolve, reject) => {
+            console.debug('resolving dir path', pathEntries);
+            if (pathEntries.length == 0) {
+                return resolve(parent);
+            }
+            // Throw out './' or '/' and move on to prevent something like '/foo/.//bar'.
+            if (pathEntries[0] == '.' || pathEntries[0] == '') {
+                pathEntries = pathEntries.slice(1);
+            }
+            parent.getDirectory(pathEntries[0], { create: true }, (dirEntry) => {
+                console.debug('directory ' + pathEntries[0] + ' available, remaining: ' + (pathEntries.length - 1));
+                // Recursively add the new subfolder (if we still have another to create).
+                if (pathEntries.length > 1) {
+                    getOrCreateDirectoryForPath(dirEntry, pathEntries.slice(1))
+                        .then(resolve)
+                        .catch(reject);
+                }
+                else {
+                    resolve(dirEntry);
+                }
+            }, reject);
+        });
+    });
+}
 function exists(path, parentDirectory) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
@@ -118,13 +145,17 @@ function unzipEntry(entry, outputDirectoryEntry) {
     return __awaiter(this, void 0, void 0, function* () {
         console.debug(`extracting ${entry.filename} to ${outputDirectoryEntry.fullPath}`);
         let isDirectory = entry.filename.charAt(entry.filename.length - 1) == '/';
-        if (isDirectory) {
-            console.debug('add directory: ' + entry.filename);
-            yield new Promise((resolve, reject) => {
-                outputDirectoryEntry.getDirectory(entry.filename, { create: true }, resolve, reject);
-            });
+        let directoryPathEntries = entry.filename.split('/').filter(pathEntry => !!pathEntry);
+        if (!isDirectory) {
+            directoryPathEntries.splice(directoryPathEntries.length - 1, 1);
         }
-        else {
+        console.log('directoryPathEntries=' + directoryPathEntries.join(', '));
+        let targetDirectory = outputDirectoryEntry;
+        if (directoryPathEntries.length > 0) {
+            targetDirectory = yield getOrCreateDirectoryForPath(outputDirectoryEntry, directoryPathEntries);
+        }
+        console.log('targetDirectory=' + targetDirectory.fullPath);
+        if (!isDirectory) {
             console.debug('adding file (get file): ' + entry.filename);
             const targetFileEntry = yield new Promise((resolve, reject) => {
                 outputDirectoryEntry.getFile(entry.filename, { create: true, exclusive: false }, resolve, reject);
@@ -141,6 +172,7 @@ function unzipEntry(entry, outputDirectoryEntry) {
 }
 function unzip(zipFileUrl, outputDirectoryUrl, successCallback, errorCallback) {
     return __awaiter(this, void 0, void 0, function* () {
+        zip.useWebWorkers = false;
         function onProgress(loaded, total) {
             successCallback({ loaded, total }, { keepCallback: true });
         }
@@ -195,7 +227,6 @@ function unzip(zipFileUrl, outputDirectoryUrl, successCallback, errorCallback) {
 module.exports = {
     unzip: function (successCallback, errorCallback, args) {
         const [zipFileUrl, outputDirectoryUrl] = args;
-        zip.useWebWorkers = false;
         unzip(zipFileUrl, outputDirectoryUrl, successCallback, errorCallback);
     }
 };
