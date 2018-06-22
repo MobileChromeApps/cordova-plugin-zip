@@ -1,151 +1,4 @@
 
-enum FileErrors {
-    TypeMismatchError = 11,
-    NotFoundError = 1
-}
-
-function isFileError(error: any, requestedError: FileErrors): boolean {
-    if (error.name && error.name == FileErrors[requestedError]) {
-        return true;
-    }
-
-    if (error.code && error.code == requestedError) {
-        return true;
-    }
-
-    return false;
-}
-
-function getFileEntry(path: string, parentDirectory: DirectoryEntry): Promise<FileEntry> {
-    return new Promise<FileEntry>((resolve, reject) => {
-        parentDirectory.getFile(path, {}, resolve, reject);
-    });
-}
-
-function resolveOrCreateDirectoryEntry(entryUrl: string): Promise<DirectoryEntry> {
-    return resolveOrCreateEntry(entryUrl, true) as Promise<DirectoryEntry>;
-}
-
-function resolveOrCreateFileEntry(entryUrl: string): Promise<FileEntry> {
-    return resolveOrCreateEntry(entryUrl, false) as Promise<FileEntry>;
-}
-
-async function resolveOrCreateEntry(entryUrl: string, directory: boolean): Promise<DirectoryEntry | FileEntry> {
-    let entry: DirectoryEntry | FileEntry;
-    try {
-        entry = await new Promise<Entry>((resolve, reject) => {
-            window.resolveLocalFileSystemURL(entryUrl, resolve, reject);
-        }) as DirectoryEntry | FileEntry;
-    } catch (e) {
-        console.error(e);
-        console.error(`cannot resolve directory entry at url ${entryUrl}`);
-
-        const fileSystem: FileSystem = await (entryUrl.indexOf('/temporary/') != -1 ? getFileSystem(FileSystemType.TEMPORARY) : getFileSystem());
-        let path: string = entryUrl;
-        if (entryUrl.indexOf('/temporary/') != -1) {
-            path = entryUrl.substring(entryUrl.indexOf('/temporary/') + '/temporary/'.length - 1);
-        } else if (entryUrl.indexOf('/persistent/') != -1) {
-            path = entryUrl.substring(entryUrl.indexOf('/persistent/') + '/persistent/'.length - 1);
-        }
-
-        entry = await new Promise<DirectoryEntry | FileEntry>((resolve, reject) => {
-            if (directory) {
-                fileSystem.root.getDirectory(path, { create: true, exclusive: false }, resolve, reject);
-            } else {
-                fileSystem.root.getFile(path, { create: true, exclusive: true }, resolve, reject);
-            }
-        });
-    }
-
-    return entry;
-}
-
-async function getOrCreateDirectoryForPath(parent: DirectoryEntry, pathEntries: string[]): Promise<DirectoryEntry> {
-    pathEntries = pathEntries.filter(pathEntry => pathEntry != '');
-
-    return new Promise<DirectoryEntry>((resolve, reject) => {
-        console.debug('resolving dir path', pathEntries);
-
-        if (pathEntries.length == 0) {
-            return resolve(parent);
-        }
-
-        // Throw out './' or '/' and move on to prevent something like '/foo/.//bar'.
-        if (pathEntries[0] == '.' || pathEntries[0] == '') {
-            pathEntries = pathEntries.slice(1);
-        }
-
-        parent.getDirectory(pathEntries[0], { create: true }, (dirEntry: DirectoryEntry) => {
-            console.debug('directory ' + pathEntries[0] + ' available, remaining: ' + (pathEntries.length - 1));
-
-            // Recursively add the new subfolder (if we still have another to create).
-            if (pathEntries.length > 1) {
-                getOrCreateDirectoryForPath(dirEntry, pathEntries.slice(1))
-                    .then(resolve)
-                    .catch(reject);
-            } else {
-                resolve(dirEntry);
-            }
-        }, reject);
-    });
-}
-
-async function exists(path: string, parentDirectory: DirectoryEntry): Promise<boolean> {
-    try {
-        await getFileEntry(path, parentDirectory);
-        return true;
-    } catch (error) {
-        if (isFileError(error, FileErrors.TypeMismatchError)) {
-            return true;
-        }
-
-        if (isFileError(error, FileErrors.NotFoundError)) {
-            return false;
-        }
-
-        throw error;
-    }
-}
-
-enum FileSystemType {
-    TEMPORARY = window.TEMPORARY,
-    PERSISTENT = window.PERSISTENT
-}
-
-const fileSystemsCache: { [type: number]: FileSystem } = {};
-async function getFileSystem(type: FileSystemType = FileSystemType.PERSISTENT): Promise<FileSystem> {
-    if (fileSystemsCache[type]) {
-        return fileSystemsCache[type];
-    }
-
-    const requestFileSystem = window['webkitRequestFileSystem'] || window.requestFileSystem;
-    const storageInfo = navigator['webkitPersistentStorage'] || window['storageInfo'];
-
-    console.debug(`zip plugin - requestFileSystem=${requestFileSystem} - storageInfo=${storageInfo}`);
-
-    // request storage quota
-    const requestedBytes: number = (1000 * 1000000 /* ? x 1Mo */);
-    let grantedBytes: number = 0;
-    if (storageInfo != null) {
-        grantedBytes = await new Promise<number>((resolve, reject) => {
-            storageInfo.requestQuota(requestedBytes, resolve, reject);
-        });
-    }
-    console.debug('granted bytes: ' + grantedBytes);
-
-    // request file system
-    if (!requestFileSystem) {
-        throw new Error('cannot access filesystem API');
-    }
-    const fileSystem: FileSystem = await new Promise<FileSystem>((resolve, reject) => {
-        requestFileSystem(type, grantedBytes, resolve, reject);
-    });
-    console.debug('FileSystem ready: ' + fileSystem.name);
-
-    fileSystemsCache[type] = fileSystem;
-
-    return fileSystem;
-}
 
 async function unzipEntry(entry: zip.Entry, outputDirectoryEntry: DirectoryEntry) {
     console.debug(`extracting ${entry.filename} to ${outputDirectoryEntry.fullPath}`);
@@ -159,7 +12,7 @@ async function unzipEntry(entry: zip.Entry, outputDirectoryEntry: DirectoryEntry
 
     let targetDirectory: DirectoryEntry = outputDirectoryEntry;
     if (directoryPathEntries.length > 0) {
-        targetDirectory = await getOrCreateDirectoryForPath(outputDirectoryEntry, directoryPathEntries);
+        targetDirectory = await CordovaPluginFileUtils.getOrCreateDirectoryForPath(outputDirectoryEntry, directoryPathEntries);
     }
     console.log('targetDirectory=' + targetDirectory.fullPath);
 
@@ -204,14 +57,12 @@ async function unzip(
 
         console.info(`unzipping ${zipFileUrl} to ${outputDirectoryUrl}`);
 
-        const fileSystem: FileSystem = await getFileSystem();
-
         console.debug(`retrieving output directory: ${outputDirectoryUrl}`);
-        const outputDirectoryEntry: DirectoryEntry = await resolveOrCreateDirectoryEntry(outputDirectoryUrl);
+        const outputDirectoryEntry: DirectoryEntry = await CordovaPluginFileUtils.resolveOrCreateDirectoryEntry(outputDirectoryUrl);
         console.debug(`output directory entry: ${outputDirectoryEntry}`);
 
         console.debug(`retrieving zip file: ${zipFileUrl}`);
-        let zipEntry: FileEntry = await resolveOrCreateFileEntry(zipFileUrl);
+        let zipEntry: FileEntry = await CordovaPluginFileUtils.resolveOrCreateFileEntry(zipFileUrl);
         console.debug(`zip file entry: ${zipEntry}`);
 
         const zipBlob: Blob = await new Promise<Blob>((resolve, reject) => {
