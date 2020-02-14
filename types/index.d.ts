@@ -22,12 +22,12 @@ interface CordovaZipPlugin {
     unzip(
         sourceZip: string,
         destinationDir: string,
-        onSuccess: (status: CordovaZipPluginUnzipResult, errorMessage?: string) => void);
+        onSuccess: (status: CordovaZipPluginUnzipResult, errorMessage?: string) => void): void;
     unzip(
         sourceZip: string,
         destinationDir: string,
         onSuccess: (status: CordovaZipPluginUnzipResult, errorMessage?: string) => void,
-        progressCallback: (event: CordovaZipPluginUnzipProgressEvent) => void);
+        progressCallback: (event: CordovaZipPluginUnzipProgressEvent) => void): void;
 }
 
 declare var zip: CordovaZipPlugin;
