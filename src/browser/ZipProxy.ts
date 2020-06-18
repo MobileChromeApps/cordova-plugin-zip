@@ -1,7 +1,6 @@
 
-
 async function unzipEntry(entry: zip.Entry, outputDirectoryEntry: DirectoryEntry) {
-    console.debug(`extracting ${entry.filename} to ${outputDirectoryEntry.fullPath}`);
+    logDebug(`extracting ${entry.filename} to ${outputDirectoryEntry.fullPath}`);
     let isDirectory = entry.filename.charAt(entry.filename.length - 1) == '/';
 
     let directoryPathEntries: string[] = entry.filename.split('/').filter(pathEntry => !!pathEntry);
@@ -17,17 +16,17 @@ async function unzipEntry(entry: zip.Entry, outputDirectoryEntry: DirectoryEntry
     console.log('targetDirectory=' + targetDirectory.fullPath);
 
     if (!isDirectory) {
-        console.debug('adding file (get file): ' + entry.filename);
+        logDebug('adding file (get file): ' + entry.filename);
         const targetFileEntry = await new Promise<FileEntry>((resolve, reject) => {
             outputDirectoryEntry.getFile(entry.filename, { create: true, exclusive: false }, resolve, reject);
         });
-        console.debug('adding file (write file): ' + entry.filename);
+        logDebug('adding file (write file): ' + entry.filename);
         await new Promise((resolve, reject) => {
             entry.getData(new zip.FileWriter(targetFileEntry), resolve, (progress, total) => {
-                console.debug(`${entry.filename}: ${progress} / ${total}`);
+                logDebug(`${entry.filename}: ${progress} / ${total}`);
             });
         });
-        console.debug('added file: ' + entry.filename);
+        logDebug('added file: ' + entry.filename);
     }
 }
 
@@ -55,27 +54,27 @@ async function unzip(
             throw new Error('zip.js not available, please import it: https://gildas-lormeau.github.io/zip.js');
         }
 
-        console.info(`unzipping ${zipFileUrl} to ${outputDirectoryUrl}`);
+        logInfo(`unzipping ${zipFileUrl} to ${outputDirectoryUrl}`);
 
-        console.debug(`retrieving output directory: ${outputDirectoryUrl}`);
+        logDebug(`retrieving output directory: ${outputDirectoryUrl}`);
         const outputDirectoryEntry: DirectoryEntry = await CordovaPluginFileUtils.resolveOrCreateDirectoryEntry(outputDirectoryUrl);
-        console.debug(`output directory entry: ${outputDirectoryEntry}`);
+        logDebug(`output directory entry: ${outputDirectoryEntry}`);
 
-        console.debug(`retrieving zip file: ${zipFileUrl}`);
+        logDebug(`retrieving zip file: ${zipFileUrl}`);
         let zipEntry: FileEntry = await CordovaPluginFileUtils.resolveOrCreateFileEntry(zipFileUrl);
-        console.debug(`zip file entry: ${zipEntry}`);
+        logDebug(`zip file entry: ${zipEntry}`);
 
         const zipBlob: Blob = await new Promise<Blob>((resolve, reject) => {
             zipEntry.file(resolve, reject);
         });
 
-        console.info(`open reader on zip: ${zipFileUrl}`);
+        logInfo(`open reader on zip: ${zipFileUrl}`);
         zip.createReader(new zip.BlobReader(zipBlob), (zipReader) => {
 
-            console.debug(`reader opened on zip: ${zipFileUrl}`);
+            logDebug(`reader opened on zip: ${zipFileUrl}`);
             zipReader.getEntries(async (zipEntries) => {
 
-                console.debug(`entries read: ${zipFileUrl}`);
+                logDebug(`entries read: ${zipFileUrl}`);
 
                 onProgress(0, zipEntries.length);
 
@@ -89,7 +88,7 @@ async function unzip(
                     }
 
                     zipReader.close(() => {
-                        console.info(`unzip OK from ${zipFileUrl} to ${outputDirectoryUrl}`);
+                        logInfo(`unzip OK from ${zipFileUrl} to ${outputDirectoryUrl}`);
                         successCallback({
                             total: zipEntries.length
                         });

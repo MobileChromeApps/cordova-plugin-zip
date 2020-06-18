@@ -1,4 +1,17 @@
+var __CORDOVA_PLUGIN_UNZIP_LOG_DEBUG_ENABLED = false;
+var __CORDOVA_PLUGIN_UNZIP_LOG_INFO_ENABLED = false;
 
+function logDebug(...messages: any[]): void {
+    if (__CORDOVA_PLUGIN_UNZIP_LOG_DEBUG_ENABLED) {
+        console.debug(...messages);
+    }
+}
+
+function logInfo(...messages: any[]): void {
+    if (__CORDOVA_PLUGIN_UNZIP_LOG_INFO_ENABLED) {
+        console.info(...messages);
+    }
+}
 
 class CordovaPluginFileUtils {
 
@@ -31,7 +44,7 @@ class CordovaPluginFileUtils {
     static resolveEntry(entryUrl: string): Promise<DirectoryEntry | FileEntry> {
         return new Promise<Entry>((resolve, reject) => {
             window.resolveLocalFileSystemURL(entryUrl, resolve, reject);
-        }) as DirectoryEntry | FileEntry;
+        }) as Promise<DirectoryEntry | FileEntry>;
     }
 
     static async resolveOrCreateEntry(entryUrl: string, directory: boolean): Promise<DirectoryEntry | FileEntry> {
@@ -76,7 +89,7 @@ class CordovaPluginFileUtils {
         pathEntries = pathEntries.filter(pathEntry => pathEntry != '');
 
         return new Promise<DirectoryEntry>((resolve, reject) => {
-            console.debug('resolving dir path', pathEntries);
+            logDebug('resolving dir path', pathEntries);
 
             if (pathEntries.length == 0) {
                 return resolve(parent);
@@ -88,7 +101,7 @@ class CordovaPluginFileUtils {
             }
 
             parent.getDirectory(pathEntries[0], { create: true }, (dirEntry: DirectoryEntry) => {
-                console.debug('directory ' + pathEntries[0] + ' available, remaining: ' + (pathEntries.length - 1));
+                logDebug('directory ' + pathEntries[0] + ' available, remaining: ' + (pathEntries.length - 1));
 
                 // Recursively add the new subfolder (if we still have another to create).
                 if (pathEntries.length > 1) {
@@ -147,7 +160,7 @@ class CordovaPluginFileUtils {
         const requestFileSystem = window['webkitRequestFileSystem'] || window.requestFileSystem;
         const storageInfo = navigator['webkitPersistentStorage'] || window['storageInfo'];
 
-        console.debug(`zip plugin - requestFileSystem=${requestFileSystem} - storageInfo=${storageInfo}`);
+        logDebug(`zip plugin - requestFileSystem=${requestFileSystem} - storageInfo=${storageInfo}`);
 
         // request storage quota
         const requestedBytes: number = (1000 * 1000000 /* ? x 1Mo */);
@@ -157,7 +170,7 @@ class CordovaPluginFileUtils {
                 storageInfo.requestQuota(requestedBytes, resolve, reject);
             });
         }
-        console.debug('granted bytes: ' + grantedBytes);
+        logDebug('granted bytes: ' + grantedBytes);
 
         // request file system
         if (!requestFileSystem) {
@@ -166,7 +179,7 @@ class CordovaPluginFileUtils {
         const fileSystem: FileSystem = await new Promise<FileSystem>((resolve, reject) => {
             requestFileSystem(type, grantedBytes, resolve, reject);
         });
-        console.debug('FileSystem ready: ' + fileSystem.name);
+        logDebug('FileSystem ready: ' + fileSystem.name);
 
         CordovaPluginFileUtils.fileSystemsCache[type] = fileSystem;
 
@@ -224,7 +237,7 @@ class CordovaPluginFileUtils {
 
         let i = 0;
         for (const entry of entries) {
-            console.info(`> copy ${entry.fullPath}`);
+            logInfo(`> copy ${entry.fullPath}`);
 
             let directoryToBeCopied: DirectoryEntry;
             if (entry.isDirectory) {
@@ -233,27 +246,27 @@ class CordovaPluginFileUtils {
                 directoryToBeCopied = await CordovaPluginFileUtils.getParent(entry);
             }
 
-            console.debug(`directory to be copied ${directoryToBeCopied.fullPath}`);
+            logDebug(`directory to be copied ${directoryToBeCopied.fullPath}`);
 
             const directoryRelativePath: string = CordovaPluginFileUtils.getRelativePath(sourceDirectory, directoryToBeCopied);
             let targetParentDirectory: DirectoryEntry = targetDirectory;
             if (directoryToBeCopied.fullPath != sourceDirectory.fullPath) {
                 targetParentDirectory = await CordovaPluginFileUtils.getOrCreateChildDirectory(targetDirectory, directoryRelativePath);
             }
-            console.debug('targetParentDirectory=' + targetDirectory.fullPath);
+            logDebug('targetParentDirectory=' + targetDirectory.fullPath);
 
             if (!entry.isDirectory) {
                 await new Promise<Entry>((resolve, reject) => {
                     if (move) {
-                        console.debug(`move file ${entry.fullPath} to ${targetParentDirectory.fullPath}`);
+                        logDebug(`move file ${entry.fullPath} to ${targetParentDirectory.fullPath}`);
                         entry.moveTo(targetParentDirectory, entry.name, resolve, reject);
                     } else {
-                        console.debug(`copy file ${entry.fullPath} to ${targetParentDirectory.fullPath}`);
+                        logDebug(`copy file ${entry.fullPath} to ${targetParentDirectory.fullPath}`);
                         entry.copyTo(targetParentDirectory, entry.name, resolve, reject);
                     }
                 });
 
-                console.info(`copied file: ${entry.fullPath} to ${targetParentDirectory.fullPath}`);
+                logInfo(`copied file: ${entry.fullPath} to ${targetParentDirectory.fullPath}`);
             }
 
             onProgress(++i, entries.length);

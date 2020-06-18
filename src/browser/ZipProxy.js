@@ -1,11 +1,24 @@
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
         function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
         function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : new P(function (resolve) { resolve(result.value); }).then(fulfilled, rejected); }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
+var __CORDOVA_PLUGIN_UNZIP_LOG_DEBUG_ENABLED = false;
+var __CORDOVA_PLUGIN_UNZIP_LOG_INFO_ENABLED = false;
+function logDebug(...messages) {
+    if (__CORDOVA_PLUGIN_UNZIP_LOG_DEBUG_ENABLED) {
+        console.debug(...messages);
+    }
+}
+function logInfo(...messages) {
+    if (__CORDOVA_PLUGIN_UNZIP_LOG_INFO_ENABLED) {
+        console.info(...messages);
+    }
+}
 class CordovaPluginFileUtils {
     static isFileError(error, requestedError) {
         if (error.name && error.name == CordovaPluginFileUtils.FileErrors[requestedError]) {
@@ -27,13 +40,16 @@ class CordovaPluginFileUtils {
     static resolveOrCreateFileEntry(entryUrl) {
         return CordovaPluginFileUtils.resolveOrCreateEntry(entryUrl, false);
     }
+    static resolveEntry(entryUrl) {
+        return new Promise((resolve, reject) => {
+            window.resolveLocalFileSystemURL(entryUrl, resolve, reject);
+        });
+    }
     static resolveOrCreateEntry(entryUrl, directory) {
         return __awaiter(this, void 0, void 0, function* () {
             let entry;
             try {
-                entry = (yield new Promise((resolve, reject) => {
-                    window.resolveLocalFileSystemURL(entryUrl, resolve, reject);
-                }));
+                entry = yield CordovaPluginFileUtils.resolveEntry(entryUrl);
             }
             catch (e) {
                 console.error(e);
@@ -72,7 +88,7 @@ class CordovaPluginFileUtils {
         return __awaiter(this, void 0, void 0, function* () {
             pathEntries = pathEntries.filter(pathEntry => pathEntry != '');
             return new Promise((resolve, reject) => {
-                console.debug('resolving dir path', pathEntries);
+                logDebug('resolving dir path', pathEntries);
                 if (pathEntries.length == 0) {
                     return resolve(parent);
                 }
@@ -81,7 +97,7 @@ class CordovaPluginFileUtils {
                     pathEntries = pathEntries.slice(1);
                 }
                 parent.getDirectory(pathEntries[0], { create: true }, (dirEntry) => {
-                    console.debug('directory ' + pathEntries[0] + ' available, remaining: ' + (pathEntries.length - 1));
+                    logDebug('directory ' + pathEntries[0] + ' available, remaining: ' + (pathEntries.length - 1));
                     // Recursively add the new subfolder (if we still have another to create).
                     if (pathEntries.length > 1) {
                         CordovaPluginFileUtils.getOrCreateDirectoryForPath(dirEntry, pathEntries.slice(1))
@@ -117,6 +133,20 @@ class CordovaPluginFileUtils {
             }
         });
     }
+    static getEntryTypeAtPath(path, parentDirectory) {
+        return __awaiter(this, void 0, void 0, function* () {
+            try {
+                yield CordovaPluginFileUtils.getFileEntry(path, parentDirectory);
+                return CordovaPluginFileUtils.EntryType.File;
+            }
+            catch (error) {
+                if (CordovaPluginFileUtils.isFileError(error, CordovaPluginFileUtils.FileErrors.TypeMismatchError)) {
+                    return CordovaPluginFileUtils.EntryType.Directory;
+                }
+                throw error;
+            }
+        });
+    }
     static getFileSystem(type = CordovaPluginFileUtils.FileSystemType.PERSISTENT) {
         return __awaiter(this, void 0, void 0, function* () {
             if (CordovaPluginFileUtils.fileSystemsCache[type]) {
@@ -124,7 +154,7 @@ class CordovaPluginFileUtils {
             }
             const requestFileSystem = window['webkitRequestFileSystem'] || window.requestFileSystem;
             const storageInfo = navigator['webkitPersistentStorage'] || window['storageInfo'];
-            console.debug(`zip plugin - requestFileSystem=${requestFileSystem} - storageInfo=${storageInfo}`);
+            logDebug(`zip plugin - requestFileSystem=${requestFileSystem} - storageInfo=${storageInfo}`);
             // request storage quota
             const requestedBytes = (1000 * 1000000 /* ? x 1Mo */);
             let grantedBytes = 0;
@@ -133,7 +163,7 @@ class CordovaPluginFileUtils {
                     storageInfo.requestQuota(requestedBytes, resolve, reject);
                 });
             }
-            console.debug('granted bytes: ' + grantedBytes);
+            logDebug('granted bytes: ' + grantedBytes);
             // request file system
             if (!requestFileSystem) {
                 throw new Error('cannot access filesystem API');
@@ -141,7 +171,7 @@ class CordovaPluginFileUtils {
             const fileSystem = yield new Promise((resolve, reject) => {
                 requestFileSystem(type, grantedBytes, resolve, reject);
             });
-            console.debug('FileSystem ready: ' + fileSystem.name);
+            logDebug('FileSystem ready: ' + fileSystem.name);
             CordovaPluginFileUtils.fileSystemsCache[type] = fileSystem;
             return fileSystem;
         });
@@ -169,7 +199,7 @@ class CordovaPluginFileUtils {
                 const recursiveChildren = [];
                 for (const directChild of content) {
                     if (directChild.isDirectory) {
-                        recursiveChildren.push(...(yield CordovaPluginFileUtils.listDirectoryContent(directChild)));
+                        recursiveChildren.push(...(yield CordovaPluginFileUtils.listDirectoryContent(directChild, true)));
                     }
                 }
                 content.push(...recursiveChildren);
@@ -187,7 +217,7 @@ class CordovaPluginFileUtils {
             const entries = yield CordovaPluginFileUtils.listDirectoryContent(sourceDirectory, true);
             let i = 0;
             for (const entry of entries) {
-                console.info(`> copy ${entry.fullPath}`);
+                logInfo(`> copy ${entry.fullPath}`);
                 let directoryToBeCopied;
                 if (entry.isDirectory) {
                     directoryToBeCopied = entry;
@@ -195,25 +225,25 @@ class CordovaPluginFileUtils {
                 else {
                     directoryToBeCopied = yield CordovaPluginFileUtils.getParent(entry);
                 }
-                console.debug(`directory to be copied ${directoryToBeCopied.fullPath}`);
+                logDebug(`directory to be copied ${directoryToBeCopied.fullPath}`);
                 const directoryRelativePath = CordovaPluginFileUtils.getRelativePath(sourceDirectory, directoryToBeCopied);
                 let targetParentDirectory = targetDirectory;
                 if (directoryToBeCopied.fullPath != sourceDirectory.fullPath) {
                     targetParentDirectory = yield CordovaPluginFileUtils.getOrCreateChildDirectory(targetDirectory, directoryRelativePath);
                 }
-                console.debug('targetParentDirectory=' + targetDirectory.fullPath);
+                logDebug('targetParentDirectory=' + targetDirectory.fullPath);
                 if (!entry.isDirectory) {
                     yield new Promise((resolve, reject) => {
                         if (move) {
-                            console.debug(`move file ${entry.fullPath} to ${targetParentDirectory.fullPath}`);
+                            logDebug(`move file ${entry.fullPath} to ${targetParentDirectory.fullPath}`);
                             entry.moveTo(targetParentDirectory, entry.name, resolve, reject);
                         }
                         else {
-                            console.debug(`copy file ${entry.fullPath} to ${targetParentDirectory.fullPath}`);
+                            logDebug(`copy file ${entry.fullPath} to ${targetParentDirectory.fullPath}`);
                             entry.copyTo(targetParentDirectory, entry.name, resolve, reject);
                         }
                     });
-                    console.info(`copied file: ${entry.fullPath} to ${targetParentDirectory.fullPath}`);
+                    logInfo(`copied file: ${entry.fullPath} to ${targetParentDirectory.fullPath}`);
                 }
                 onProgress(++i, entries.length);
             }
@@ -241,10 +271,15 @@ CordovaPluginFileUtils.fileSystemsCache = {};
         FileErrors[FileErrors["TypeMismatchError"] = 11] = "TypeMismatchError";
         FileErrors[FileErrors["NotFoundError"] = 1] = "NotFoundError";
     })(FileErrors = CordovaPluginFileUtils.FileErrors || (CordovaPluginFileUtils.FileErrors = {}));
+    let EntryType;
+    (function (EntryType) {
+        EntryType[EntryType["File"] = 0] = "File";
+        EntryType[EntryType["Directory"] = 1] = "Directory";
+    })(EntryType = CordovaPluginFileUtils.EntryType || (CordovaPluginFileUtils.EntryType = {}));
 })(CordovaPluginFileUtils || (CordovaPluginFileUtils = {}));
 function unzipEntry(entry, outputDirectoryEntry) {
     return __awaiter(this, void 0, void 0, function* () {
-        console.debug(`extracting ${entry.filename} to ${outputDirectoryEntry.fullPath}`);
+        logDebug(`extracting ${entry.filename} to ${outputDirectoryEntry.fullPath}`);
         let isDirectory = entry.filename.charAt(entry.filename.length - 1) == '/';
         let directoryPathEntries = entry.filename.split('/').filter(pathEntry => !!pathEntry);
         if (!isDirectory) {
@@ -257,17 +292,17 @@ function unzipEntry(entry, outputDirectoryEntry) {
         }
         console.log('targetDirectory=' + targetDirectory.fullPath);
         if (!isDirectory) {
-            console.debug('adding file (get file): ' + entry.filename);
+            logDebug('adding file (get file): ' + entry.filename);
             const targetFileEntry = yield new Promise((resolve, reject) => {
                 outputDirectoryEntry.getFile(entry.filename, { create: true, exclusive: false }, resolve, reject);
             });
-            console.debug('adding file (write file): ' + entry.filename);
+            logDebug('adding file (write file): ' + entry.filename);
             yield new Promise((resolve, reject) => {
                 entry.getData(new zip.FileWriter(targetFileEntry), resolve, (progress, total) => {
-                    console.debug(`${entry.filename}: ${progress} / ${total}`);
+                    logDebug(`${entry.filename}: ${progress} / ${total}`);
                 });
             });
-            console.debug('added file: ' + entry.filename);
+            logDebug('added file: ' + entry.filename);
         }
     });
 }
@@ -281,21 +316,21 @@ function unzip(zipFileUrl, outputDirectoryUrl, successCallback, errorCallback) {
             if (!zip) {
                 throw new Error('zip.js not available, please import it: https://gildas-lormeau.github.io/zip.js');
             }
-            console.info(`unzipping ${zipFileUrl} to ${outputDirectoryUrl}`);
-            console.debug(`retrieving output directory: ${outputDirectoryUrl}`);
+            logInfo(`unzipping ${zipFileUrl} to ${outputDirectoryUrl}`);
+            logDebug(`retrieving output directory: ${outputDirectoryUrl}`);
             const outputDirectoryEntry = yield CordovaPluginFileUtils.resolveOrCreateDirectoryEntry(outputDirectoryUrl);
-            console.debug(`output directory entry: ${outputDirectoryEntry}`);
-            console.debug(`retrieving zip file: ${zipFileUrl}`);
+            logDebug(`output directory entry: ${outputDirectoryEntry}`);
+            logDebug(`retrieving zip file: ${zipFileUrl}`);
             let zipEntry = yield CordovaPluginFileUtils.resolveOrCreateFileEntry(zipFileUrl);
-            console.debug(`zip file entry: ${zipEntry}`);
+            logDebug(`zip file entry: ${zipEntry}`);
             const zipBlob = yield new Promise((resolve, reject) => {
                 zipEntry.file(resolve, reject);
             });
-            console.info(`open reader on zip: ${zipFileUrl}`);
+            logInfo(`open reader on zip: ${zipFileUrl}`);
             zip.createReader(new zip.BlobReader(zipBlob), (zipReader) => {
-                console.debug(`reader opened on zip: ${zipFileUrl}`);
+                logDebug(`reader opened on zip: ${zipFileUrl}`);
                 zipReader.getEntries((zipEntries) => __awaiter(this, void 0, void 0, function* () {
-                    console.debug(`entries read: ${zipFileUrl}`);
+                    logDebug(`entries read: ${zipFileUrl}`);
                     onProgress(0, zipEntries.length);
                     try {
                         let i = 0;
@@ -304,7 +339,7 @@ function unzip(zipFileUrl, outputDirectoryUrl, successCallback, errorCallback) {
                             onProgress(++i, zipEntries.length);
                         }
                         zipReader.close(() => {
-                            console.info(`unzip OK from ${zipFileUrl} to ${outputDirectoryUrl}`);
+                            logInfo(`unzip OK from ${zipFileUrl} to ${outputDirectoryUrl}`);
                             successCallback({
                                 total: zipEntries.length
                             });

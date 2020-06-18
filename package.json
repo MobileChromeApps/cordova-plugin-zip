@@ -34,5 +34,8 @@
     "bugs": {
         "url": "https://github.com/MobileChromeApps/zip/issues"
     },
-    "homepage": "https://github.com/MobileChromeApps/zip"
+    "homepage": "https://github.com/MobileChromeApps/zip",
+    "devDependencies": {
+        "typescript": "3.9.5"
+    }
 }
