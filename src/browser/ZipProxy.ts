@@ -7,13 +7,13 @@ async function unzipEntry(entry: zip.Entry, outputDirectoryEntry: DirectoryEntry
     if (!isDirectory) {
         directoryPathEntries.splice(directoryPathEntries.length - 1, 1);
     }
-    console.log('directoryPathEntries=' + directoryPathEntries.join(', '));
+    logInfo('directoryPathEntries=' + directoryPathEntries.join(', '));
 
     let targetDirectory: DirectoryEntry = outputDirectoryEntry;
     if (directoryPathEntries.length > 0) {
         targetDirectory = await CordovaPluginFileUtils.getOrCreateDirectoryForPath(outputDirectoryEntry, directoryPathEntries);
     }
-    console.log('targetDirectory=' + targetDirectory.fullPath);
+    logInfo('targetDirectory=' + targetDirectory.fullPath);
 
     if (!isDirectory) {
         logDebug('adding file (get file): ' + entry.filename);
