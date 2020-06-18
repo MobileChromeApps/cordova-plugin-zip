@@ -285,12 +285,12 @@ function unzipEntry(entry, outputDirectoryEntry) {
         if (!isDirectory) {
             directoryPathEntries.splice(directoryPathEntries.length - 1, 1);
         }
-        console.log('directoryPathEntries=' + directoryPathEntries.join(', '));
+        logInfo('directoryPathEntries=' + directoryPathEntries.join(', '));
         let targetDirectory = outputDirectoryEntry;
         if (directoryPathEntries.length > 0) {
             targetDirectory = yield CordovaPluginFileUtils.getOrCreateDirectoryForPath(outputDirectoryEntry, directoryPathEntries);
         }
-        console.log('targetDirectory=' + targetDirectory.fullPath);
+        logInfo('targetDirectory=' + targetDirectory.fullPath);
         if (!isDirectory) {
             logDebug('adding file (get file): ' + entry.filename);
             const targetFileEntry = yield new Promise((resolve, reject) => {
