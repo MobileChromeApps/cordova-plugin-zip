@@ -2,7 +2,7 @@
 <plugin xmlns="http://phonegap.com/ns/plugins/1.0"
     xmlns:android="http://schemas.android.com/apk/res/android"
     id="cordova-plugin-zip"
-    version="3.1.0">
+    version="3.2.0">
   <engines>
     <engine name="cordova" version=">=3.3.0" />
   </engines>
@@ -14,6 +14,17 @@
   <js-module src="zip.js" name="Zip">
     <clobbers target="zip" />
   </js-module>
+
+  <platform name="browser">
+      <config-file target="config.xml" parent="/*">
+        <feature name="Zip">
+            <param name="browser-package" value="Zip" />
+        </feature>
+      </config-file>
+      <js-module name="ZipProxy" src="src/browser/ZipProxy.js">
+        <runs />
+      </js-module>
+  </platform>
 
   <platform name="android">
     <source-file src="src/android/Zip.java" target-dir="src/org/apache/cordova" />
