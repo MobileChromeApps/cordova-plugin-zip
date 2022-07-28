@@ -126,6 +126,15 @@ public class Zip extends CordovaPlugin {
                    dir.mkdirs();
                 } else {
                     File file = new File(outputDirectory + compressedName);
+                    // LUCIFER-244 - Fix for Android "Zip traversal vulnerability" 
+                    String canonicalDestinationPath = (new File(outputDirectory)).getCanonicalPath();
+                    String canonicalPath = file.getCanonicalPath();
+                    if (!canonicalPath.startsWith(canonicalDestinationPath)) {
+                        String errorMessage = "Zip traversal security error";
+                        callbackContext.error(errorMessage);
+                        Log.e(LOG_TAG, errorMessage);
+                        return;
+                    }
                     file.getParentFile().mkdirs();
                     if(file.exists() || file.createNewFile()){
                         Log.w("Zip", "extracting: " + file.getPath());
